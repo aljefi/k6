@@ -10,6 +10,8 @@ public class GraphTask {
     public double km;
     public double dollar;
     int[][] matrix;
+    Vertex start;
+    Vertex finish;
     HashMap<Vertex, Double> priceToAllPoints = new HashMap<>();
     HashMap<Vertex, Double> distToAllPoints = new HashMap<>();
     HashMap<Vertex, Boolean> alreadyWas = new HashMap<>();
@@ -28,22 +30,18 @@ public class GraphTask {
      */
     public void run() {
         Graph g = new Graph("G");
-        g.createRandomSimpleGraph(6, 9);
+        g.createRandomSimpleGraph(4, 3);
         System.out.println(g);
         // type here where From and where to we are going
         Vertex vFrom = new Vertex("v4", null, null);
         Vertex vTo = new Vertex("v1", null, null);
         System.out.println("---");
-//        int count = 0;
-//        for (int[] elem : matrix) {
-//            count++;
-//            System.out.println("matrix v" + count + Arrays.toString(elem));
-//        }
-        List<java.io.Serializable> priceCheapestRoute = g.findRoute(vFrom, vTo);
-        for (Object elem :
-                priceCheapestRoute) {
-            System.out.println(elem);
-        }
+        List<List<Arc>> minRoutes = g.findRoute(vFrom, vTo);
+
+        System.out.println(distToAllPoints.get(finish));
+        System.out.println("Route with cheapest price("+priceToAllPoints.get(finish)+"$)=" + minRoutes.get(0));
+        System.out.println("Route with minimum distance("+distToAllPoints.get(finish)+"km)=" + minRoutes.get(1));
+        System.out.println("Route with minimum points=" + minRoutes.get(2));
 
 //      Graph h = new Graph ("H");
 //      h.createRandomSimpleGraph (6, 9);
@@ -317,10 +315,10 @@ public class GraphTask {
          * @param vTo to which point
          * @return list with cheapest, min destination and shortest(cheapest/minDest) routes
          */
-        public List<java.io.Serializable> findRoute(Vertex vFrom, Vertex vTo) {
-            System.out.println("From: " + vFrom);
-            System.out.println("To: " + vTo);
-            List<java.io.Serializable> ret = new ArrayList<>();
+        public List<List<Arc>> findRoute(Vertex vFrom, Vertex vTo) {
+            System.out.println("From:   " + vFrom);
+            System.out.println("To:     " + vTo);
+            List<List<Arc>> ret = new ArrayList<>();
             Vertex tempS = this.first;
             Vertex tempF = this.first;
             String findStart = tempS.id;
@@ -330,7 +328,7 @@ public class GraphTask {
                 tempS = tempS.next;
                 findStart = tempS.toString();
             }
-            Vertex start = tempS;
+            start = tempS;
             findPrice(start);
             findDist(start);
             priceToAllPoints.put(start, 0.0);
@@ -342,24 +340,20 @@ public class GraphTask {
                 tempF = tempF.next;
                 findFinish = tempF.toString();
             }
-            Vertex finish = tempF;
+            finish = tempF;
             Double routePrice = priceToAllPoints.get(finish);
             Double routeDist = distToAllPoints.get(finish);
-            StringBuilder byPrice = findRoutePrice(finish, start, routePrice);
-            StringBuilder byDist = findRouteDist(finish, start, routeDist);
-            byPrice.append(";with cheapest price=");
-            byPrice.append(priceToAllPoints.get(finish));
-            byDist.append(";with min destination=");
-            byDist.append(distToAllPoints.get(finish));
+            List<Arc> byPrice = findRoutePrice(finish, start, routePrice);
+            List<Arc> byDist = findRouteDist(finish, start, routeDist);
             ret.add(byPrice);
             ret.add(byDist);
-            StringBuilder leastStops;
-            if (byPrice.length() > byDist.length()) {
+            List<Arc> leastStops;
+            if (byPrice.size() > byDist.size()) {
                 leastStops = byDist;
             } else {
                 leastStops = byPrice;
             }
-            ret.add("trip, with the least number of stops will be " + leastStops);
+            ret.add(leastStops);
             return ret;
         }
 
@@ -369,23 +363,24 @@ public class GraphTask {
          * @param route price of route
          * @return route, with the cheapest price
          */
-        public StringBuilder findRoutePrice(Vertex finish, Vertex start, Double route) {
+        public List<Arc> findRoutePrice(Vertex finish, Vertex start, Double route) {
             Arc currentArc = finish.first;
-            StringBuilder ret = new StringBuilder();
-            ret.append(finish.id);
+//            StringBuilder ret = new StringBuilder();
+            List<Arc> ret = new LinkedList<>();
+//            ret.append(finish.id);
 
             while (!currentArc.target.equals(start)) {
                 if (route - currentArc.price == priceToAllPoints.get(currentArc.target)) {
                     route = priceToAllPoints.get(currentArc.target);
-                    ret.append(" <- ");
-                    ret.append(currentArc.target);
+//                    ret.append(" <- ");
+                    ret.add(currentArc);
                     currentArc = currentArc.target.first;
                 } else {
                     currentArc = currentArc.next;
                 }
             }
-            ret.append(" <- ");
-            ret.append(currentArc.target);
+//            ret.append(" <- ");
+            ret.add(currentArc);
             return ret;
         }
 
@@ -395,23 +390,24 @@ public class GraphTask {
          * @param route destination of route
          * @return route, with minimum destination
          */
-        public StringBuilder findRouteDist(Vertex finish, Vertex start, Double route) {
+        public List<Arc> findRouteDist(Vertex finish, Vertex start, Double route) {
             Arc currentArc = finish.first;
-            StringBuilder ret = new StringBuilder();
-            ret.append(finish.id);
+//            StringBuilder ret = new StringBuilder();
+            List<Arc> ret = new LinkedList<>();
+//            ret.append(finish.id);
 
             while (!currentArc.target.equals(start)) {
                 if (route - currentArc.distance == distToAllPoints.get(currentArc.target)) {
                     route = distToAllPoints.get(currentArc.target);
-                    ret.append(" <- ");
-                    ret.append(currentArc.target);
+//                    ret.append(" <- ");
+                    ret.add(currentArc);
                     currentArc = currentArc.target.first;
                 } else {
                     currentArc = currentArc.next;
                 }
             }
-            ret.append(" <- ");
-            ret.append(currentArc.target);
+//            ret.append(" <- ");
+            ret.add(currentArc);
             return ret;
         }
 
